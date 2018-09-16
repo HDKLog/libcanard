@@ -30,7 +30,6 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,25 +38,6 @@ extern "C" {
 /// Libcanard version. API will be backwards compatible within the same major version.
 #define CANARD_VERSION_MAJOR                        0
 #define CANARD_VERSION_MINOR                        2
-
-/// By default this macro resolves to the standard assert(). The user can redefine this if necessary.
-#ifndef CANARD_ASSERT
-# define CANARD_ASSERT(x)   assert(x)
-#endif
-
-#define CANARD_GLUE(a, b)           CANARD_GLUE_IMPL_(a, b)
-#define CANARD_GLUE_IMPL_(a, b)     a##b
-
-/// By default this macro expands to static_assert if supported by the language (C11, C++11, or newer).
-/// The user can redefine this if necessary.
-#ifndef CANARD_STATIC_ASSERT
-# if (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)) ||\
-     (defined(__cplusplus) && (__cplusplus >= 201103L))
-#  define CANARD_STATIC_ASSERT(...) static_assert(__VA_ARGS__)
-# else
-#  define CANARD_STATIC_ASSERT(x, ...) typedef char CANARD_GLUE(_static_assertion_, __LINE__)[(x) ? 1 : -1]
-# endif
-#endif
 
 /// Error code definitions; inverse of these values may be returned from API calls.
 #define CANARD_OK                                   0
@@ -235,8 +215,6 @@ struct CanardRxState
 
     uint8_t buffer_head[];
 };
-CANARD_STATIC_ASSERT(offsetof(CanardRxState, buffer_head) <= 28, "Invalid memory layout");
-CANARD_STATIC_ASSERT(CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE >= 4, "Invalid memory layout");
 
 /**
  * This is the core structure that keeps all of the states and allocated resources of the library instance.
@@ -513,11 +491,6 @@ CanardPoolAllocatorStatistics canardGetPoolAllocatorStatistics(CanardInstance* i
  */
 uint16_t canardConvertNativeFloatToFloat16(float value);
 float canardConvertFloat16ToNativeFloat(uint16_t value);
-
-/// Abort the build if the current platform is not supported.
-CANARD_STATIC_ASSERT(((uint32_t)CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE) < 32,
-                     "Platforms where sizeof(void*) > 4 are not supported. "
-                     "On AMD64 use 32-bit mode (e.g. GCC flag -m32).");
 
 #ifdef __cplusplus
 }
